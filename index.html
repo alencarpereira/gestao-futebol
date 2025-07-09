@@ -6,7 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Calculadora de Probabilidades - Futebol</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="script.js" defer></script>
 </head>
 
 <body>
@@ -21,7 +22,7 @@
             <input type="text" id="nomeTimeB" placeholder="Digite o nome do Time B" />
         </section>
 
-        <form id="formulario" onsubmit="event.preventDefault(); calcularProbabilidades();">
+        <form id="formulario">
 
             <fieldset>
                 <legend>Time A</legend>
@@ -105,10 +106,9 @@
                 </div>
             </fieldset>
 
-
             <div class="botoes">
                 <button id="calcular" type="submit">Calcular Probabilidades</button>
-                <button id="limpar" type="button" onclick="limparFormulario()">Limpar Dados</button>
+                <button id="limpar" type="button">Limpar Dados</button>
             </div>
         </form>
 
@@ -119,7 +119,7 @@
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <!-- O script.js será carregado com defer para garantir que o DOM já esteja pronto -->
 </body>
 
 </html>

@@ -1,148 +1,311 @@
+/* ===== Variáveis CSS para cores e estilos ===== */
+:root {
+    --cor-primaria: #00796b;
+    --cor-primaria-escura: #004d40;
+    --cor-verde-vibrante: #43a047;
+    --cor-verde-hover: #388e3c;
+    --cor-vermelho-vibrante: #e53935;
+    --cor-vermelho-hover: #b71c1c;
+    --cor-fundo: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+    --cor-texto: #222;
+    --cor-texto-escuro: #004d40;
+    --cor-sugestao-bg: #a5d6a7;
+    --cor-sugestao-bg-hover: #81c784;
+    --cor-aviso-bg: #fff4e5;
+    --cor-aviso-borda: #ffa500;
+    --cor-sugestao-prob-bg: #d0f0ff;
+    --cor-sugestao-prob-borda: #0077b6;
+    --cor-sugestao-risco-bg: #ffe0e0;
+    --cor-sugestao-risco-borda: #ff4d4d;
+}
+
+/* ===== Reset Box-sizing ===== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* ===== Corpo e Container principal ===== */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 20px auto;
-    max-width: 900px;
-    background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
-    color: #222;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    margin: 1.25rem auto;
+    max-width: 56.25rem;
+    /* 900px */
+    background: var(--cor-fundo);
+    color: var(--cor-texto);
+    padding: 1.25rem;
+    border-radius: 0.625rem;
+    box-shadow: 0 0.375rem 0.9375rem rgba(0, 0, 0, 0.1);
 }
 
+/* ===== Título Principal ===== */
 h1 {
     text-align: center;
-    color: #00796b;
+    color: var(--cor-primaria);
     font-weight: 700;
     font-size: 2.5rem;
-    margin-bottom: 30px;
-    text-shadow: 1px 1px 3px #004d40;
+    margin-bottom: 1.875rem;
+    text-shadow: 1px 1px 3px var(--cor-primaria-escura);
 }
 
+/* ===== Fieldset, Legend e Labels ===== */
 fieldset {
-    border: 2px solid #00796b;
-    margin-bottom: 25px;
-    padding: 20px 25px;
-    border-radius: 10px;
+    border: 0.125rem solid var(--cor-primaria);
+    margin-bottom: 1.5625rem;
+    padding: 1.25rem 1.5625rem;
+    border-radius: 0.625rem;
     background-color: #e0f2f1;
-    box-shadow: inset 2px 2px 8px rgba(255, 255, 255, 0.8);
+    box-shadow: inset 0.125rem 0.125rem 0.5rem rgba(255, 255, 255, 0.8);
     transition: box-shadow 0.3s ease;
 }
 
 fieldset:hover {
-    box-shadow: inset 4px 4px 12px rgba(255, 255, 255, 1);
+    box-shadow: inset 0.25rem 0.25rem 0.75rem rgba(255, 255, 255, 1);
 }
 
 legend {
     font-weight: 700;
     font-size: 1.3rem;
-    color: #004d40;
-    padding: 0 10px;
+    color: var(--cor-primaria-escura);
+    padding: 0 0.625rem;
 }
 
 label {
     display: block;
-    margin-top: 12px;
+    margin-top: 0.75rem;
     font-weight: 600;
-    color: #004d40;
+    color: var(--cor-primaria-escura);
     user-select: none;
 }
 
+/* ===== Inputs ===== */
 input[type="number"],
 input[type="text"] {
-    width: 60px;
-    padding: 8px 10px;
-    margin-right: 8px;
+    width: 3.75rem;
+    /* 60px */
+    padding: 0.5rem 0.625rem;
+    margin-right: 0.5rem;
     font-size: 1.1rem;
-    border: 2px solid #00796b;
-    border-radius: 6px;
+    border: 0.125rem solid var(--cor-primaria);
+    border-radius: 0.375rem;
     outline: none;
     transition: border-color 0.3s ease;
 }
 
 input[type="text"] {
-    width: 180px;
-    margin-bottom: 20px;
+    width: 11.25rem;
+    /* 180px */
+    margin-bottom: 1.25rem;
 }
 
 input[type="number"]:focus,
 input[type="text"]:focus {
-    border-color: #004d40;
-    box-shadow: 0 0 6px #004d40;
+    border-color: var(--cor-primaria-escura);
+    box-shadow: 0 0 0.375rem var(--cor-primaria-escura);
 }
 
+/* ===== Grupos de inputs ===== */
 .grupo-input {
-    margin-top: 15px;
+    margin-top: 0.9375rem;
 }
 
+/* ===== Botões ===== */
 .botoes {
     text-align: center;
-    margin-top: 25px;
+    margin-top: 1.5625rem;
 }
 
 button {
-    padding: 12px 28px;
-    margin: 12px 8px;
+    padding: 0.75rem 1.75rem;
+    margin: 0.75rem 0.5rem;
     font-size: 1.2rem;
     cursor: pointer;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     color: white;
     font-weight: 700;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
     transition: background-color 0.3s ease, transform 0.2s ease;
     user-select: none;
 }
 
 button#calcular {
-    background-color: #43a047;
-    /* verde vibrante */
+    background-color: var(--cor-verde-vibrante);
 }
 
 button#calcular:hover {
-    background-color: #388e3c;
+    background-color: var(--cor-verde-hover);
     transform: scale(1.05);
 }
 
 button#limpar {
-    background-color: #e53935;
-    /* vermelho vibrante */
+    background-color: var(--cor-vermelho-vibrante);
 }
 
 button#limpar:hover {
-    background-color: #b71c1c;
+    background-color: var(--cor-vermelho-hover);
     transform: scale(1.05);
 }
 
+/* ===== Resultado ===== */
 #resultado {
     background-color: #ffffffcc;
-    padding: 20px;
-    border-radius: 10px;
-    border: 2px solid #00796b;
-    box-shadow: 0 8px 20px rgba(0, 121, 107, 0.3);
-    min-height: 140px;
-    margin-top: 30px;
+    padding: 1.25rem;
+    border-radius: 0.625rem;
+    border: 0.125rem solid var(--cor-primaria);
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 121, 107, 0.3);
+    min-height: 8.75rem;
+    margin-top: 1.875rem;
     font-size: 1.2rem;
-    color: #004d40;
+    color: var(--cor-primaria-escura);
     line-height: 1.5;
     user-select: text;
 }
 
+/* ===== Gráfico ===== */
 canvas#grafico {
-    margin-top: 40px;
+    margin-top: 2.5rem;
     max-width: 100%;
-    height: 320px;
-    border-radius: 10px;
+    height: 20rem;
+    border-radius: 0.625rem;
     background: #e0f7fa;
-    box-shadow: 0 8px 20px rgba(0, 121, 107, 0.25);
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 121, 107, 0.25);
 }
 
+/* ===== Inputs de nome (centralizados) ===== */
 .input-nomes {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 1.875rem;
 }
 
 .input-nomes label {
-    margin-right: 10px;
+    margin-right: 0.625rem;
     font-weight: 600;
-    color: #004d40;
+    color: var(--cor-primaria-escura);
+}
+
+/* ===== Lista de sugestões ===== */
+#resultado ul {
+    list-style-type: disc;
+    margin-left: 1.25rem;
+    margin-top: 0.625rem;
+    padding-left: 0;
+    color: var(--cor-primaria-escura);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+#resultado ul li {
+    background-color: var(--cor-sugestao-bg);
+    margin-bottom: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.375rem rgba(0, 77, 64, 0.3);
+    transition: background-color 0.3s ease;
+}
+
+#resultado ul li:hover {
+    background-color: var(--cor-sugestao-bg-hover);
+    cursor: default;
+}
+
+/* ===== Avisos ===== */
+.aviso {
+    color: #b55f00;
+    font-style: italic;
+    background-color: var(--cor-aviso-bg);
+    padding: 0.25rem 0.5rem;
+    border-left: 0.25rem solid var(--cor-aviso-borda);
+    margin-top: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+/* ===== Sugestão com porcentagem ===== */
+.sugestao-com-prob {
+    font-weight: bold;
+    color: #1d3557;
+    background-color: var(--cor-sugestao-prob-bg);
+    border-left: 0.25rem solid var(--cor-sugestao-prob-borda);
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+/* ===== Sugestão de risco ===== */
+.sugestao-risco {
+    font-style: italic;
+    color: #b00020;
+    background-color: var(--cor-sugestao-risco-bg);
+    border-left: 0.25rem solid var(--cor-sugestao-risco-borda);
+    padding: 0.25rem 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 0.25rem;
+}
+
+.aviso-padrao {
+    background-color: #fff8e1;
+    color: #8d6e63;
+    border-left: 4px solid #ffb300;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    font-style: italic;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(255, 179, 0, 0.2);
+}
+
+.sugestao-ambos-marcam {
+    background-color: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    color: #0d47a1;
+    position: relative;
+    margin-bottom: 6px;
+}
+
+.sugestao-ambos-marcam::before {
+    content: "🎯 ";
+    font-size: 1.2rem;
+    margin-right: 6px;
+}
+
+.aviso-erro {
+    color: #c0392b;
+    /* vermelho forte */
+    background-color: #fdecea;
+    /* fundo vermelho claro */
+    border: 1px solid #e74c3c;
+    /* borda vermelha */
+    padding: 10px 15px;
+    margin-top: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+
+
+/* ===== Responsividade ===== */
+@media (max-width: 480px) {
+
+    input[type="number"],
+    input[type="text"] {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        margin-right: 0;
+    }
+
+    button {
+        width: 100%;
+        margin: 0.5rem 0;
+    }
+
+    .input-nomes label {
+        display: block;
+        margin-bottom: 0.5rem;
+    }
 }

@@ -1,4 +1,4 @@
-/* ===== Variáveis CSS para cores e estilos ===== */
+/* ===== Variáveis para cores e fontes ===== */
 :root {
     --cor-primaria: #00796b;
     --cor-primaria-escura: #004d40;
@@ -9,124 +9,159 @@
     --cor-fundo: linear-gradient(135deg, #e0f7fa, #b2ebf2);
     --cor-texto: #222;
     --cor-texto-escuro: #004d40;
-    --cor-sugestao-bg: #a5d6a7;
-    --cor-sugestao-bg-hover: #81c784;
-    --cor-aviso-bg: #fff4e5;
-    --cor-aviso-borda: #ffa500;
-    --cor-sugestao-prob-bg: #d0f0ff;
-    --cor-sugestao-prob-borda: #0077b6;
-    --cor-sugestao-risco-bg: #ffe0e0;
-    --cor-sugestao-risco-borda: #ff4d4d;
+    --cor-bg-form: #e0f2f1;
+    --cor-input-bg: #f9fdfa;
+    --cor-borda-input: #00796b;
+    --cor-sombra: rgba(0, 0, 0, 0.1);
+    --font-family-base: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* ===== Reset Box-sizing ===== */
+/* ===== Reset e box sizing ===== */
 *,
 *::before,
 *::after {
     box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-/* ===== Corpo e Container principal ===== */
+/* ===== Body e container principal ===== */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 1.25rem auto;
-    max-width: 56.25rem;
-    /* 900px */
+    font-family: var(--font-family-base);
     background: var(--cor-fundo);
     color: var(--cor-texto);
-    padding: 1.25rem;
-    border-radius: 0.625rem;
-    box-shadow: 0 0.375rem 0.9375rem rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
 }
 
-/* ===== Título Principal ===== */
+main {
+    background: white;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    padding: 30px 40px;
+    box-shadow: 0 10px 20px var(--cor-sombra);
+}
+
+/* ===== Título ===== */
 h1 {
     text-align: center;
     color: var(--cor-primaria);
     font-weight: 700;
-    font-size: 2.5rem;
-    margin-bottom: 1.875rem;
+    font-size: 2.8rem;
+    margin-bottom: 30px;
     text-shadow: 1px 1px 3px var(--cor-primaria-escura);
 }
 
-/* ===== Fieldset, Legend e Labels ===== */
+/* ===== Inputs dos nomes (centralizados) ===== */
+.input-nomes {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.input-nomes label {
+    font-weight: 600;
+    color: var(--cor-primaria-escura);
+    margin-right: 10px;
+    font-size: 1.1rem;
+}
+
+.input-nomes input[type="text"] {
+    width: 220px;
+    padding: 10px 15px;
+    border: 2px solid var(--cor-borda-input);
+    border-radius: 8px;
+    font-size: 1rem;
+    color: var(--cor-texto-escuro);
+    transition: border-color 0.3s ease;
+}
+
+.input-nomes input[type="text"]:focus {
+    border-color: var(--cor-verde-vibrante);
+    outline: none;
+    box-shadow: 0 0 8px var(--cor-verde-vibrante);
+}
+
+/* ===== Formulário e Fieldsets ===== */
+form {
+    width: 100%;
+}
+
 fieldset {
-    border: 0.125rem solid var(--cor-primaria);
-    margin-bottom: 1.5625rem;
-    padding: 1.25rem 1.5625rem;
-    border-radius: 0.625rem;
-    background-color: #e0f2f1;
-    box-shadow: inset 0.125rem 0.125rem 0.5rem rgba(255, 255, 255, 0.8);
+    background: var(--cor-bg-form);
+    border: 2px solid var(--cor-primaria);
+    border-radius: 12px;
+    padding: 25px 30px;
+    margin-bottom: 30px;
+    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.8);
     transition: box-shadow 0.3s ease;
 }
 
 fieldset:hover {
-    box-shadow: inset 0.25rem 0.25rem 0.75rem rgba(255, 255, 255, 1);
+    box-shadow: inset 0 4px 10px rgba(255, 255, 255, 1);
 }
 
 legend {
     font-weight: 700;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     color: var(--cor-primaria-escura);
-    padding: 0 0.625rem;
+    padding: 0 10px;
+    margin-bottom: 15px;
 }
 
-label {
-    display: block;
-    margin-top: 0.75rem;
+/* ===== Labels e inputs dentro dos fieldsets ===== */
+.grupo-input {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 15px;
+}
+
+.grupo-input label {
+    width: 130px;
     font-weight: 600;
     color: var(--cor-primaria-escura);
     user-select: none;
 }
 
-/* ===== Inputs ===== */
-input[type="number"],
-input[type="text"] {
-    width: 3.75rem;
-    /* 60px */
-    padding: 0.5rem 0.625rem;
-    margin-right: 0.5rem;
-    font-size: 1.1rem;
-    border: 0.125rem solid var(--cor-primaria);
-    border-radius: 0.375rem;
-    outline: none;
+.grupo-input input[type="number"] {
+    width: 60px;
+    margin-right: 12px;
+    padding: 8px 10px;
+    font-size: 1rem;
+    border: 2px solid var(--cor-borda-input);
+    border-radius: 8px;
+    background: var(--cor-input-bg);
+    color: var(--cor-texto-escuro);
     transition: border-color 0.3s ease;
+    text-align: center;
 }
 
-input[type="text"] {
-    width: 11.25rem;
-    /* 180px */
-    margin-bottom: 1.25rem;
-}
-
-input[type="number"]:focus,
-input[type="text"]:focus {
-    border-color: var(--cor-primaria-escura);
-    box-shadow: 0 0 0.375rem var(--cor-primaria-escura);
-}
-
-/* ===== Grupos de inputs ===== */
-.grupo-input {
-    margin-top: 0.9375rem;
+.grupo-input input[type="number"]:focus {
+    border-color: var(--cor-verde-vibrante);
+    outline: none;
+    box-shadow: 0 0 6px var(--cor-verde-vibrante);
 }
 
 /* ===== Botões ===== */
 .botoes {
     text-align: center;
-    margin-top: 1.5625rem;
+    margin-top: 20px;
 }
 
 button {
-    padding: 0.75rem 1.75rem;
-    margin: 0.75rem 0.5rem;
-    font-size: 1.2rem;
     cursor: pointer;
-    border: none;
-    border-radius: 0.5rem;
-    color: white;
+    padding: 12px 30px;
+    font-size: 1.15rem;
+    border-radius: 10px;
     font-weight: 700;
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    color: white;
+    border: none;
+    box-shadow: 0 5px 10px var(--cor-sombra);
     transition: background-color 0.3s ease, transform 0.2s ease;
+    margin: 0 10px;
     user-select: none;
 }
 
@@ -149,47 +184,35 @@ button#limpar:hover {
 }
 
 /* ===== Resultado ===== */
+#resultado-container {
+    margin-top: 40px;
+}
+
+#resultado-container h2 {
+    font-size: 2rem;
+    color: var(--cor-primaria-escura);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
 #resultado {
-    background-color: #ffffffcc;
-    padding: 1.25rem;
-    border-radius: 0.625rem;
-    border: 0.125rem solid var(--cor-primaria);
-    box-shadow: 0 0.5rem 1.25rem rgba(0, 121, 107, 0.3);
-    min-height: 8.75rem;
-    margin-top: 1.875rem;
+    background: #ffffffdd;
+    border: 2px solid var(--cor-primaria);
+    border-radius: 14px;
+    padding: 20px 25px;
+    box-shadow: 0 8px 20px rgba(0, 121, 107, 0.3);
     font-size: 1.2rem;
     color: var(--cor-primaria-escura);
     line-height: 1.5;
     user-select: text;
+    min-height: 140px;
 }
 
-/* ===== Gráfico ===== */
-canvas#grafico {
-    margin-top: 2.5rem;
-    max-width: 100%;
-    height: 20rem;
-    border-radius: 0.625rem;
-    background: #e0f7fa;
-    box-shadow: 0 0.5rem 1.25rem rgba(0, 121, 107, 0.25);
-}
-
-/* ===== Inputs de nome (centralizados) ===== */
-.input-nomes {
-    text-align: center;
-    margin-bottom: 1.875rem;
-}
-
-.input-nomes label {
-    margin-right: 0.625rem;
-    font-weight: 600;
-    color: var(--cor-primaria-escura);
-}
-
-/* ===== Lista de sugestões ===== */
+/* Lista dentro do resultado */
 #resultado ul {
     list-style-type: disc;
-    margin-left: 1.25rem;
-    margin-top: 0.625rem;
+    margin-left: 1.5rem;
+    margin-top: 15px;
     padding-left: 0;
     color: var(--cor-primaria-escura);
     font-weight: 700;
@@ -197,115 +220,147 @@ canvas#grafico {
 }
 
 #resultado ul li {
-    background-color: var(--cor-sugestao-bg);
-    margin-bottom: 0.375rem;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 0.125rem 0.375rem rgba(0, 77, 64, 0.3);
+    background-color: #a5d6a7;
+    margin-bottom: 8px;
+    padding: 8px 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0, 77, 64, 0.3);
     transition: background-color 0.3s ease;
 }
 
 #resultado ul li:hover {
-    background-color: var(--cor-sugestao-bg-hover);
+    background-color: #81c784;
     cursor: default;
 }
 
-/* ===== Avisos ===== */
+/* Avisos e mensagens especiais */
 .aviso {
     color: #b55f00;
     font-style: italic;
-    background-color: var(--cor-aviso-bg);
-    padding: 0.25rem 0.5rem;
-    border-left: 0.25rem solid var(--cor-aviso-borda);
-    margin-top: 0.25rem;
-    border-radius: 0.25rem;
-}
-
-/* ===== Sugestão com porcentagem ===== */
-.sugestao-com-prob {
-    font-weight: bold;
-    color: #1d3557;
-    background-color: var(--cor-sugestao-prob-bg);
-    border-left: 0.25rem solid var(--cor-sugestao-prob-borda);
-    padding: 0.25rem 0.5rem;
-    margin-bottom: 0.25rem;
-    border-radius: 0.25rem;
-}
-
-/* ===== Sugestão de risco ===== */
-.sugestao-risco {
-    font-style: italic;
-    color: #b00020;
-    background-color: var(--cor-sugestao-risco-bg);
-    border-left: 0.25rem solid var(--cor-sugestao-risco-borda);
-    padding: 0.25rem 0.5rem;
-    margin-bottom: 0.25rem;
-    border-radius: 0.25rem;
-}
-
-.aviso-padrao {
-    background-color: #fff8e1;
-    color: #8d6e63;
-    border-left: 4px solid #ffb300;
-    padding: 6px 10px;
-    margin-bottom: 6px;
-    border-radius: 6px;
-    font-style: italic;
-    font-weight: 600;
-    box-shadow: 0 1px 4px rgba(255, 179, 0, 0.2);
-}
-
-.sugestao-ambos-marcam {
-    background-color: #e3f2fd;
-    border-left: 4px solid #2196f3;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-weight: 600;
-    color: #0d47a1;
-    position: relative;
-    margin-bottom: 6px;
-}
-
-.sugestao-ambos-marcam::before {
-    content: "🎯 ";
-    font-size: 1.2rem;
-    margin-right: 6px;
+    background-color: #fff4e5;
+    padding: 6px 12px;
+    border-left: 6px solid #ffa500;
+    margin-top: 12px;
+    border-radius: 8px;
 }
 
 .aviso-erro {
     color: #c0392b;
-    /* vermelho forte */
     background-color: #fdecea;
-    /* fundo vermelho claro */
-    border: 1px solid #e74c3c;
-    /* borda vermelha */
-    padding: 10px 15px;
-    margin-top: 15px;
-    border-radius: 5px;
-    font-weight: bold;
-    font-size: 1.1rem;
+    border: 2px solid #e74c3c;
+    padding: 12px 18px;
+    margin-top: 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.15rem;
     text-align: center;
+    user-select: none;
+}
+
+.sugestao-com-prob {
+    font-weight: 700;
+    color: #1d3557;
+    background-color: #d0f0ff;
+    border-left: 6px solid #0077b6;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+}
+
+.sugestao-risco {
+    font-style: italic;
+    color: #b00020;
+    background-color: #ffe0e0;
+    border-left: 6px solid #ff4d4d;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+}
+
+.sugestao-ambos-marcam {
+    background-color: #e3f2fd;
+    border-left: 6px solid #2196f3;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    color: #0d47a1;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.sugestao-ambos-marcam::before {
+    content: "🎯 ";
+    font-size: 1.3rem;
+    margin-right: 8px;
+}
+
+.comparacao-probabilidades {
+    margin-top: 20px;
+    padding: 15px 20px;
+    background-color: #d0f0ff;
+    /* fundo azul claro */
+    border-left: 6px solid #0077b6;
+    /* barra azul mais escura */
+    border-radius: 10px;
+    color: #014f86;
+    /* azul escuro para texto */
+    font-weight: 700;
+    font-size: 1.15rem;
+    user-select: text;
+}
+
+.comparacao-probabilidades p {
+    margin: 0.3rem 0;
+}
+
+.comparacao-probabilidades p.melhor-opcao {
+    font-size: 1.3rem;
+    color: #004d40;
+    /* verde escuro para destaque */
+    font-weight: 900;
+    margin-top: 0.8rem;
 }
 
 
+/* ===== Gráfico ===== */
+canvas#grafico {
+    margin-top: 30px;
+    width: 100% !important;
+    height: 300px !important;
+    border-radius: 14px;
+    background: #e0f7fa;
+    box-shadow: 0 6px 20px rgba(0, 121, 107, 0.25);
+}
 
 /* ===== Responsividade ===== */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+    main {
+        padding: 20px;
+    }
 
-    input[type="number"],
-    input[type="text"] {
+    .grupo-input {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .grupo-input label {
+        margin-bottom: 6px;
+    }
+
+    .grupo-input input[type="number"] {
         width: 100%;
-        margin-bottom: 0.75rem;
+        max-width: 160px;
+        margin-bottom: 12px;
         margin-right: 0;
+    }
+
+    .input-nomes input[type="text"] {
+        width: 100%;
+        max-width: 300px;
     }
 
     button {
         width: 100%;
-        margin: 0.5rem 0;
-    }
-
-    .input-nomes label {
-        display: block;
-        margin-bottom: 0.5rem;
+        margin: 8px 0;
     }
 }

@@ -49,31 +49,37 @@ function calcularForcasDetalhadas(golsMarcados, golsSofridos, golsAdv, sofridosA
     };
 }
 
-function probabilidadeMais25Gols(media) {
-    return media > 2.5 ? "Alta" : media > 2.0 ? "Média" : "Baixa";
-}
+function compararMaisMenosGols(mediaTotalGols) {
+    let chanceMais15 = 0;
+    let chanceMenos35 = 0;
 
-function probabilidadeMais15Gols(media) {
-    return media > 1.5 ? "Alta" : media > 1.0 ? "Média" : "Baixa";
-}
+    // Simples lógica baseada na média de gols
+    if (mediaTotalGols > 2.5) {
+        chanceMais15 = 85;
+        chanceMenos35 = 30;
+    } else if (mediaTotalGols > 2.0) {
+        chanceMais15 = 75;
+        chanceMenos35 = 45;
+    } else if (mediaTotalGols > 1.5) {
+        chanceMais15 = 60;
+        chanceMenos35 = 55;
+    } else {
+        chanceMais15 = 40;
+        chanceMenos35 = 70;
+    }
 
-function probabilidadeMais5Escanteios(media) {
-    return media > 5 ? "Alta" : media > 3 ? "Média" : "Baixa";
+    const melhorOpcao = chanceMais15 > chanceMenos35 ? "+1.5 gols" : "-3.5 gols";
+
+    return { chanceMais15, chanceMenos35, melhorOpcao };
 }
 
 function analisarConfrontoDireto(golsA, golsB) {
-    let vitoriasA = 0;
-    let vitoriasB = 0;
-    let empates = 0;
+    let vitoriasA = 0, vitoriasB = 0, empates = 0;
 
     for (let i = 0; i < golsA.length; i++) {
-        if (golsA[i] > golsB[i]) {
-            vitoriasA++;
-        } else if (golsB[i] > golsA[i]) {
-            vitoriasB++;
-        } else {
-            empates++;
-        }
+        if (golsA[i] > golsB[i]) vitoriasA++;
+        else if (golsB[i] > golsA[i]) vitoriasB++;
+        else empates++;
     }
 
     return { vitoriasA, vitoriasB, empates };
@@ -93,7 +99,6 @@ function gerarSugestoes({
 }) {
     const sugestoes = [];
 
-    // 1) +1.5 gols
     if (mediaTotalGols > 1.0) {
         let porcentagemGols;
         if (mediaTotalGols > 2.5) porcentagemGols = 85;
@@ -106,12 +111,10 @@ function gerarSugestoes({
         sugestoes.push("Critério não atingido para +1.5 gols.");
     }
 
-    // 2) Vitória provável
     const diferencaForca = Math.abs(forcaA - forcaB);
     if (diferencaForca >= 1.5) {
         const favorito = forcaA > forcaB ? nomeTimeA : nomeTimeB;
         let porcentagemVitoria;
-
         if (diferencaForca > 2.5) porcentagemVitoria = 85;
         else if (diferencaForca > 2.0) porcentagemVitoria = 75;
         else porcentagemVitoria = 65;
@@ -121,7 +124,6 @@ function gerarSugestoes({
         sugestoes.push("Critério não atingido para vitória provável.");
     }
 
-    // 3) +5 escanteios
     if (mediaEscanteiosTotal > 4) {
         let porcentagemEscanteios;
         if (mediaEscanteiosTotal > 7) porcentagemEscanteios = 85;
@@ -134,7 +136,6 @@ function gerarSugestoes({
         sugestoes.push("Critério não atingido para escanteios.");
     }
 
-    // 4) Ambos marcam
     const ambosMarcam = (
         mediaGolsA > 1 && mediaSofridosB > 1 &&
         mediaGolsB > 1 && mediaSofridosA > 1
@@ -148,7 +149,6 @@ function gerarSugestoes({
 
     return { sugestoes, ambosMarcam };
 }
-
 
 function exibirResultado({
     nomeTimeA,
@@ -167,7 +167,8 @@ function exibirResultado({
     forcaB,
     resultadoConfronto = '',
     sugestoes = [],
-    ambosMarcam = true
+    ambosMarcam = true,
+    comparacaoGols
 }) {
     const div = document.getElementById('resultado');
     div.innerHTML = `
@@ -180,21 +181,20 @@ function exibirResultado({
         ${resultadoConfronto}
     `;
 
-    if (sugestoes && sugestoes.length > 0) {
+    if (sugestoes.length > 0) {
         div.innerHTML += `
         <p><strong>Sugestões baseadas nos dados:</strong></p>
         <ul>
             ${sugestoes.map(s => {
-            const textoPadrao = "Jogo equilibrado, difícil prever com alta confiança";
-            const isPadrao = s.toLowerCase().includes(textoPadrao.toLowerCase());
+            const isPadrao = s.toLowerCase().includes("difícil prever");
             const isRisco = s.toLowerCase().includes("aposta arriscada");
-            const isAmbosMarcam = s.toLowerCase().includes("ambos marcam");
+            const isAmbos = s.toLowerCase().includes("ambos marcam");
             const hasPorcentagem = /\(\d+%\)/.test(s);
 
             let className = "";
             if (isPadrao) className = "aviso-padrao";
             else if (isRisco) className = "sugestao-risco";
-            else if (isAmbosMarcam) className = "sugestao-ambos-marcam";
+            else if (isAmbos) className = "sugestao-ambos-marcam";
             else if (hasPorcentagem) className = "sugestao-com-prob";
 
             return `<li class="${className}">${s}</li>`;
@@ -204,20 +204,27 @@ function exibirResultado({
 
         if (!ambosMarcam) {
             div.innerHTML += `
-                <p class="aviso-erro" style="color: red; font-weight: bold;">
+                <p class="aviso-erro">
                     A condição "ambos marcam" não é válida com os dados informados.
                 </p>
             `;
         }
     }
+
+    if (comparacaoGols) {
+        div.innerHTML += `
+      <div class="comparacao-probabilidades">
+        <p>Comparação: +1.5 gols: ${comparacaoGols.chanceMais15}% | -3.5 gols: ${comparacaoGols.chanceMenos35}%</p>
+        <p class="melhor-opcao">Melhor opção: ${comparacaoGols.melhorOpcao}</p>
+      </div>
+    `;
+    }
+
 }
 
 function criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA, totalGolsB, totalEscanteiosA, totalEscanteiosB }) {
     const ctx = document.getElementById('grafico').getContext('2d');
-
-    if (chartInstance) {
-        chartInstance.destroy();
-    }
+    if (chartInstance) chartInstance.destroy();
 
     chartInstance = new Chart(ctx, {
         type: 'bar',
@@ -241,9 +248,7 @@ function criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    }
+                    ticks: { stepSize: 1 }
                 }
             }
         }
@@ -278,7 +283,6 @@ function calcularProbabilidades() {
     const sofridosB = pegarDados('sofridosB');
     const escanteiosA = pegarDados('escanteiosA');
     const escanteiosB = pegarDados('escanteiosB');
-
     const cdGolsA = pegarDadosConfrontoDireto('cdGolsA');
     const cdGolsB = pegarDadosConfrontoDireto('cdGolsB');
 
@@ -297,24 +301,21 @@ function calcularProbabilidades() {
     const mediaTotalGols = (mediaGolsA + mediaGolsB + mediaSofridosA + mediaSofridosB) / 2;
     const mediaEscanteiosTotal = (mediaEscanteiosA + mediaEscanteiosB) / 2;
 
-    const chanceMais25 = probabilidadeMais25Gols(mediaTotalGols);
-    const chanceMais15 = probabilidadeMais15Gols(mediaTotalGols);
-    const chanceMais5Escanteios = probabilidadeMais5Escanteios(mediaEscanteiosTotal);
+    const chanceMais25 = mediaTotalGols > 2.5 ? "Alta" : mediaTotalGols > 2.0 ? "Média" : "Baixa";
+    const chanceMais15 = mediaTotalGols > 1.5 ? "Alta" : mediaTotalGols > 1.0 ? "Média" : "Baixa";
+    const chanceMais5Escanteios = mediaEscanteiosTotal > 5 ? "Alta" : mediaEscanteiosTotal > 3 ? "Média" : "Baixa";
 
     const forcaA = calcularForcasDetalhadas(golsA, sofridosA, golsB, sofridosB);
     const forcaB = calcularForcasDetalhadas(golsB, sofridosB, golsA, sofridosA);
 
-    let resultado;
-    if (forcaA.forcaFinal > forcaB.forcaFinal) {
-        resultado = `${nomeTimeA} tem mais chances de vencer.`;
-    } else if (forcaB.forcaFinal > forcaA.forcaFinal) {
-        resultado = `${nomeTimeB} tem mais chances de vencer.`;
-    } else {
-        resultado = "Jogo equilibrado, alta chance de empate.";
-    }
+    const resultado = forcaA.forcaFinal > forcaB.forcaFinal
+        ? `${nomeTimeA} tem mais chances de vencer.`
+        : forcaB.forcaFinal > forcaA.forcaFinal
+            ? `${nomeTimeB} tem mais chances de vencer.`
+            : "Jogo equilibrado, alta chance de empate.";
 
     let resultadoConfronto = '';
-    if (cdGolsA.length > 0 && cdGolsB.length > 0) {
+    if (cdGolsA.length && cdGolsB.length) {
         const confronto = analisarConfrontoDireto(cdGolsA, cdGolsB);
         resultadoConfronto = `
             <p><strong>Confronto Direto:</strong></p>
@@ -323,6 +324,8 @@ function calcularProbabilidades() {
             <p>Empates: ${confronto.empates}</p>
         `;
     }
+
+    const comparacaoGols = compararMaisMenosGols(mediaTotalGols);
 
     const { sugestoes, ambosMarcam } = gerarSugestoes({
         mediaTotalGols,
@@ -354,21 +357,30 @@ function calcularProbabilidades() {
         forcaB: forcaB.forcaFinal.toFixed(2),
         resultadoConfronto,
         sugestoes,
-        ambosMarcam
+        ambosMarcam,
+        comparacaoGols
     });
 
-    criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA, totalGolsB, totalEscanteiosA, totalEscanteiosB });
+    criarGrafico({
+        nomeTimeA,
+        nomeTimeB,
+        mediaGolsA,
+        mediaGolsB,
+        totalGolsA,
+        totalGolsB,
+        totalEscanteiosA,
+        totalEscanteiosB
+    });
 }
 
-// Event listeners para formulário e botões
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('formulario').addEventListener('submit', function (e) {
+    document.getElementById('formulario').addEventListener('submit', e => {
         e.preventDefault();
         calcularProbabilidades();
     });
-
     document.getElementById('limpar').addEventListener('click', limparFormulario);
 });
+
 
 
 

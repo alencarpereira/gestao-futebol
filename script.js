@@ -1,5 +1,6 @@
 let chartInstance = null;
 
+// Pega valores dos inputs pelo prefixo e quantidade de jogos
 function pegarDados(prefixo, jogos = 5) {
     const dados = [];
     for (let i = 1; i <= jogos; i++) {
@@ -9,6 +10,7 @@ function pegarDados(prefixo, jogos = 5) {
     return dados;
 }
 
+// Pega valores do confronto direto, validando números >= 0
 function pegarDadosConfrontoDireto(prefixo, jogos = 5) {
     const dados = [];
     for (let i = 1; i <= jogos; i++) {
@@ -20,12 +22,14 @@ function pegarDadosConfrontoDireto(prefixo, jogos = 5) {
     return dados;
 }
 
+// Calcula a média de um array de números
 function calcularMedia(valores) {
     if (valores.length === 0) return 0;
     const soma = valores.reduce((acc, val) => acc + val, 0);
     return soma / valores.length;
 }
 
+// Calcula forças ofensiva e defensiva e força final ponderada
 function calcularForcasDetalhadas(golsMarcados, golsSofridos, golsAdv, sofridosAdv) {
     const FO = calcularMedia(golsMarcados);
     const FD = calcularMedia(golsSofridos);
@@ -49,11 +53,11 @@ function calcularForcasDetalhadas(golsMarcados, golsSofridos, golsAdv, sofridosA
     };
 }
 
+// Compara chances simples para +1.5 e -3.5 gols com base na média total
 function compararMaisMenosGols(mediaTotalGols) {
     let chanceMais15 = 0;
     let chanceMenos35 = 0;
 
-    // Simples lógica baseada na média de gols
     if (mediaTotalGols > 2.5) {
         chanceMais15 = 85;
         chanceMenos35 = 30;
@@ -73,6 +77,7 @@ function compararMaisMenosGols(mediaTotalGols) {
     return { chanceMais15, chanceMenos35, melhorOpcao };
 }
 
+// Análise do confronto direto para contar vitórias e empates
 function analisarConfrontoDireto(golsA, golsB) {
     let vitoriasA = 0, vitoriasB = 0, empates = 0;
 
@@ -85,6 +90,44 @@ function analisarConfrontoDireto(golsA, golsB) {
     return { vitoriasA, vitoriasB, empates };
 }
 
+// Calcula % de jogos que ambos marcaram no confronto direto
+function calcularAmbosMarcamConfrontoDireto(cdA, cdB) {
+    const total = Math.min(cdA.length, cdB.length);
+    if (total === 0) return null;
+
+    let jogosAmbosMarcaram = 0;
+    for (let i = 0; i < total; i++) {
+        if (cdA[i] > 0 && cdB[i] > 0) {
+            jogosAmbosMarcaram++;
+        }
+    }
+
+    return ((jogosAmbosMarcaram / total) * 100).toFixed(0);
+}
+
+// Calcula chance geral de "ambos marcam" com base em médias e confronto direto
+function calcularChanceAmbosMarcam(mediaGolsA, mediaGolsB, mediaSofridosA, mediaSofridosB, cdA, cdB) {
+    let score = 0;
+    if (mediaGolsA > 1) score++;
+    if (mediaGolsB > 1) score++;
+    if (mediaSofridosA > 1) score++;
+    if (mediaSofridosB > 1) score++;
+
+    let chance = 25;
+    if (score === 4) chance = 80;
+    else if (score === 3) chance = 70;
+    else if (score === 2) chance = 55;
+    else if (score === 1) chance = 35;
+
+    const confrontoChance = calcularAmbosMarcamConfrontoDireto(cdA, cdB);
+    if (confrontoChance !== null) {
+        chance = Math.round((chance * 0.6) + (Number(confrontoChance) * 0.4));
+    }
+
+    return chance;
+}
+
+// Função para gerar as sugestões com base nos dados calculados
 function gerarSugestoes({
     mediaTotalGols,
     mediaEscanteiosTotal,
@@ -95,7 +138,8 @@ function gerarSugestoes({
     mediaGolsA,
     mediaGolsB,
     mediaSofridosA,
-    mediaSofridosB
+    mediaSofridosB,
+    chanceAmbosMarcam
 }) {
     const sugestoes = [];
 
@@ -136,18 +180,13 @@ function gerarSugestoes({
         sugestoes.push("Critério não atingido para escanteios.");
     }
 
-    const ambosMarcam = (
-        mediaGolsA > 1 && mediaSofridosB > 1 &&
-        mediaGolsB > 1 && mediaSofridosA > 1
-    );
-
-    if (ambosMarcam) {
-        sugestoes.push("Alta chance de ambos marcarem (ambos marcam)");
+    if (chanceAmbosMarcam >= 60) {
+        sugestoes.push(`Chance de ambos marcarem (${chanceAmbosMarcam}%)`);
     } else {
         sugestoes.push("Critério não atingido para 'ambos marcam'.");
     }
 
-    return { sugestoes, ambosMarcam };
+    return { sugestoes, ambosMarcam: chanceAmbosMarcam >= 60 };
 }
 
 function exibirResultado({
@@ -168,8 +207,11 @@ function exibirResultado({
     resultadoConfronto = '',
     sugestoes = [],
     ambosMarcam = true,
-    comparacaoGols
+    comparacaoGols,
+    chanceAmbosMarcam = 0
 }) {
+    const chanceNaoAmbosMarcam = 100 - chanceAmbosMarcam;
+
     const div = document.getElementById('resultado');
     div.innerHTML = `
         <p><strong>${nomeTimeA}</strong> — Média de gols: ${mediaGolsA.toFixed(2)}, Total de gols: ${totalGolsA}, Total de escanteios: ${totalEscanteiosA}, Força final: ${forcaA}</p>
@@ -179,6 +221,9 @@ function exibirResultado({
         <p>Chance de +5 escanteios: <strong>${chanceMais5Escanteios}</strong></p>
         <p><strong>${resultado}</strong></p>
         ${resultadoConfronto}
+
+        <p><strong>Probabilidade "Ambos Marcam":</strong> ${chanceAmbosMarcam}%</p>
+        <p><strong>Probabilidade "Não Ambos Marcam":</strong> ${chanceNaoAmbosMarcam}%</p>
     `;
 
     if (sugestoes.length > 0) {
@@ -219,9 +264,9 @@ function exibirResultado({
       </div>
     `;
     }
-
 }
 
+// Cria gráfico usando Chart.js para comparar médias e totais dos times
 function criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA, totalGolsB, totalEscanteiosA, totalEscanteiosB }) {
     const ctx = document.getElementById('grafico').getContext('2d');
     if (chartInstance) chartInstance.destroy();
@@ -255,6 +300,7 @@ function criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA
     });
 }
 
+// Limpa todos os inputs e resultado na tela
 function limparFormulario() {
     const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
     inputs.forEach(input => input.value = '');
@@ -265,6 +311,7 @@ function limparFormulario() {
     }
 }
 
+// Função principal que executa o cálculo das probabilidades e exibe tudo
 function calcularProbabilidades() {
     const todosInputs = document.querySelectorAll('input[type="number"], input[type="text"]');
     const temValorPreenchido = Array.from(todosInputs).some(input => input.value.trim() !== '');
@@ -327,7 +374,18 @@ function calcularProbabilidades() {
 
     const comparacaoGols = compararMaisMenosGols(mediaTotalGols);
 
-    const { sugestoes, ambosMarcam } = gerarSugestoes({
+    const chanceAmbosMarcam = calcularChanceAmbosMarcam(
+        mediaGolsA,
+        mediaGolsB,
+        mediaSofridosA,
+        mediaSofridosB,
+        cdGolsA,
+        cdGolsB
+    );
+
+    const ambosMarcam = chanceAmbosMarcam >= 60;
+
+    const { sugestoes } = gerarSugestoes({
         mediaTotalGols,
         mediaEscanteiosTotal,
         forcaA: forcaA.forcaFinal,
@@ -337,7 +395,8 @@ function calcularProbabilidades() {
         mediaGolsA,
         mediaGolsB,
         mediaSofridosA,
-        mediaSofridosB
+        mediaSofridosB,
+        chanceAmbosMarcam
     });
 
     exibirResultado({
@@ -358,7 +417,8 @@ function calcularProbabilidades() {
         resultadoConfronto,
         sugestoes,
         ambosMarcam,
-        comparacaoGols
+        comparacaoGols,
+        chanceAmbosMarcam
     });
 
     criarGrafico({
@@ -373,6 +433,7 @@ function calcularProbabilidades() {
     });
 }
 
+// Eventos do DOM para formulário e botão limpar
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('formulario').addEventListener('submit', e => {
         e.preventDefault();
@@ -380,6 +441,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.getElementById('limpar').addEventListener('click', limparFormulario);
 });
+
+
 
 
 

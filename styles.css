@@ -149,11 +149,15 @@ legend {
 .botoes {
     text-align: center;
     margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
-button {
+.botoes button {
     cursor: pointer;
-    padding: 12px 30px;
+    padding: 12px 28px;
     font-size: 1.15rem;
     border-radius: 10px;
     font-weight: 700;
@@ -161,24 +165,37 @@ button {
     border: none;
     box-shadow: 0 5px 10px var(--cor-sombra);
     transition: background-color 0.3s ease, transform 0.2s ease;
-    margin: 0 10px;
     user-select: none;
+    min-width: 180px;
 }
 
-button#calcular {
+.botoes button#autoPreencher {
+    background-color: #1976d2;
+    /* azul vibrante */
+    box-shadow: 0 5px 10px rgba(25, 118, 210, 0.3);
+}
+
+.botoes button#autoPreencher:hover {
+    background-color: #1565c0;
+    transform: scale(1.05);
+}
+
+.botoes button#calcular {
     background-color: var(--cor-verde-vibrante);
+    box-shadow: 0 5px 12px rgba(67, 160, 71, 0.5);
 }
 
-button#calcular:hover {
+.botoes button#calcular:hover {
     background-color: var(--cor-verde-hover);
     transform: scale(1.05);
 }
 
-button#limpar {
+.botoes button#limpar {
     background-color: var(--cor-vermelho-vibrante);
+    box-shadow: 0 5px 12px rgba(229, 57, 53, 0.5);
 }
 
-button#limpar:hover {
+.botoes button#limpar:hover {
     background-color: var(--cor-vermelho-hover);
     transform: scale(1.05);
 }
@@ -319,8 +336,13 @@ button#limpar:hover {
     /* verde escuro para destaque */
     font-weight: 900;
     margin-top: 0.8rem;
+    background-color: #b2dfdb;
+    /* verde água */
+    padding: 6px 12px;
+    border-radius: 8px;
+    display: inline-block;
+    text-shadow: 1px 1px 1px #ffffffaa;
 }
-
 
 /* ===== Gráfico ===== */
 canvas#grafico {
@@ -359,8 +381,13 @@ canvas#grafico {
         max-width: 300px;
     }
 
-    button {
+    .botoes {
+        flex-direction: column;
+    }
+
+    .botoes button {
         width: 100%;
+        max-width: 300px;
         margin: 8px 0;
     }
 }

@@ -53,33 +53,6 @@
                     <input type="number" id="escanteiosA4" placeholder="Jogo 4" min="0" />
                     <input type="number" id="escanteiosA5" placeholder="Jogo 5" min="0" />
                 </div>
-
-                <div class="grupo-input">
-                    <label>Escanteios Sofridos:</label>
-                    <input type="number" id="escanteiosSofridosA1" placeholder="Jogo 1" min="0" />
-                    <input type="number" id="escanteiosSofridosA2" placeholder="Jogo 2" min="0" />
-                    <input type="number" id="escanteiosSofridosA3" placeholder="Jogo 3" min="0" />
-                    <input type="number" id="escanteiosSofridosA4" placeholder="Jogo 4" min="0" />
-                    <input type="number" id="escanteiosSofridosA5" placeholder="Jogo 5" min="0" />
-                </div>
-
-                <div class="grupo-input">
-                    <label>Cartões Amarelos:</label>
-                    <input type="number" id="cartoesAmarelosA1" placeholder="Jogo 1" min="0" />
-                    <input type="number" id="cartoesAmarelosA2" placeholder="Jogo 2" min="0" />
-                    <input type="number" id="cartoesAmarelosA3" placeholder="Jogo 3" min="0" />
-                    <input type="number" id="cartoesAmarelosA4" placeholder="Jogo 4" min="0" />
-                    <input type="number" id="cartoesAmarelosA5" placeholder="Jogo 5" min="0" />
-                </div>
-
-                <div class="grupo-input">
-                    <label>Cartões Vermelhos:</label>
-                    <input type="number" id="cartoesVermelhosA1" placeholder="Jogo 1" min="0" />
-                    <input type="number" id="cartoesVermelhosA2" placeholder="Jogo 2" min="0" />
-                    <input type="number" id="cartoesVermelhosA3" placeholder="Jogo 3" min="0" />
-                    <input type="number" id="cartoesVermelhosA4" placeholder="Jogo 4" min="0" />
-                    <input type="number" id="cartoesVermelhosA5" placeholder="Jogo 5" min="0" />
-                </div>
             </fieldset>
 
             <fieldset>
@@ -111,33 +84,6 @@
                     <input type="number" id="escanteiosB4" placeholder="Jogo 4" min="0" />
                     <input type="number" id="escanteiosB5" placeholder="Jogo 5" min="0" />
                 </div>
-
-                <div class="grupo-input">
-                    <label>Escanteios Sofridos:</label>
-                    <input type="number" id="escanteiosSofridosB1" placeholder="Jogo 1" min="0" />
-                    <input type="number" id="escanteiosSofridosB2" placeholder="Jogo 2" min="0" />
-                    <input type="number" id="escanteiosSofridosB3" placeholder="Jogo 3" min="0" />
-                    <input type="number" id="escanteiosSofridosB4" placeholder="Jogo 4" min="0" />
-                    <input type="number" id="escanteiosSofridosB5" placeholder="Jogo 5" min="0" />
-                </div>
-
-                <div class="grupo-input">
-                    <label>Cartões Amarelos:</label>
-                    <input type="number" id="cartoesAmarelosB1" placeholder="Jogo 1" min="0" />
-                    <input type="number" id="cartoesAmarelosB2" placeholder="Jogo 2" min="0" />
-                    <input type="number" id="cartoesAmarelosB3" placeholder="Jogo 3" min="0" />
-                    <input type="number" id="cartoesAmarelosB4" placeholder="Jogo 4" min="0" />
-                    <input type="number" id="cartoesAmarelosB5" placeholder="Jogo 5" min="0" />
-                </div>
-
-                <div class="grupo-input">
-                    <label>Cartões Vermelhos:</label>
-                    <input type="number" id="cartoesVermelhosB1" placeholder="Jogo 1" min="0" />
-                    <input type="number" id="cartoesVermelhosB2" placeholder="Jogo 2" min="0" />
-                    <input type="number" id="cartoesVermelhosB3" placeholder="Jogo 3" min="0" />
-                    <input type="number" id="cartoesVermelhosB4" placeholder="Jogo 4" min="0" />
-                    <input type="number" id="cartoesVermelhosB5" placeholder="Jogo 5" min="0" />
-                </div>
             </fieldset>
 
             <fieldset>
@@ -161,7 +107,6 @@
             </fieldset>
 
             <div class="botoes">
-                <button type="button" id="autoPreencher">Preencher Automaticamente</button>
                 <button id="calcular" type="submit">Calcular Probabilidades</button>
                 <button id="limpar" type="button">Limpar Dados</button>
             </div>
@@ -171,10 +116,7 @@
             <h2>Resultado</h2>
             <div id="resultado"></div>
             <canvas id="grafico"></canvas>
-
         </section>
-
-
     </main>
 
     <!-- O script.js será carregado com defer para garantir que o DOM já esteja pronto -->

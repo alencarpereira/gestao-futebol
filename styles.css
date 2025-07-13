@@ -151,6 +151,16 @@ legend {
     margin-top: 20px;
 }
 
+button#preencher {
+    background-color: #1976d2;
+}
+
+button#preencher:hover {
+    background-color: #0d47a1;
+    transform: scale(1.05);
+}
+
+
 button {
     cursor: pointer;
     padding: 12px 30px;
@@ -182,6 +192,7 @@ button#limpar:hover {
     background-color: var(--cor-vermelho-hover);
     transform: scale(1.05);
 }
+
 
 /* ===== Resultado ===== */
 #resultado-container {
@@ -321,6 +332,27 @@ button#limpar:hover {
     margin-top: 0.8rem;
 }
 
+.controle-margem {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-family: sans-serif;
+}
+
+.controle-margem label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #333;
+}
+
+#valorMargem {
+    color: #007bff;
+    font-weight: bold;
+}
+
 
 /* ===== Gráfico ===== */
 canvas#grafico {
@@ -364,3 +396,5 @@ canvas#grafico {
         margin: 8px 0;
     }
 }
+
+/* <!-- finalizado escanteios  --> */

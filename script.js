@@ -151,7 +151,6 @@ function calcularChanceAmbosMarcam(mediaGolsA, mediaGolsB, mediaSofridosA, media
 
     return chance;
 }
-
 function gerarSugestoes({
     mediaTotalGols,
     mediaEscanteiosTotal,
@@ -163,55 +162,54 @@ function gerarSugestoes({
     mediaGolsB,
     mediaSofridosA,
     mediaSofridosB,
-    chanceAmbosMarcam
+    chanceAmbosMarcam,
+    mediaCartoesPorJogo
 }) {
     const sugestoes = [];
 
-    if (mediaTotalGols > 1.0) {
-        let porcentagemGols;
-        if (mediaTotalGols > 2.5) porcentagemGols = 85;
-        else if (mediaTotalGols > 2.0) porcentagemGols = 75;
-        else if (mediaTotalGols > 1.5) porcentagemGols = 60;
-        else porcentagemGols = 45;
+    // Probabilidades % para gols e escanteios (simplificando para exemplo)
+    let probMais15 = 0, probMais25 = 0, probMais5Esc = 0;
 
-        sugestoes.push(`Alta chance de +1.5 gols no jogo (${porcentagemGols}%)`);
-    } else {
-        sugestoes.push("Critério não atingido para +1.5 gols.");
-    }
+    // Ajuste simples para percentuais baseados na média (pode ajustar)
+    if (mediaTotalGols > 2.5) probMais15 = 85;
+    else if (mediaTotalGols > 2.0) probMais15 = 75;
+    else if (mediaTotalGols > 1.5) probMais15 = 60;
+    else probMais15 = 40;
 
-    const diferencaForca = Math.abs(forcaA - forcaB);
-    if (diferencaForca >= 1.5) {
+    if (mediaTotalGols > 2.5) probMais25 = 80;
+    else if (mediaTotalGols > 2.0) probMais25 = 60;
+    else probMais25 = 40;
+
+    probMais5Esc = mediaEscanteiosTotal > 5 ? 75 : 40;
+
+    // Probabilidade de cartões com base na médiaCartoesPorJogo e fórmula proposta
+    const probCartoes = Math.min(100, Math.round((mediaCartoesPorJogo / 6) * 100));
+
+    // Sugestões formatadas com porcentagem
+    sugestoes.push(`+1.5 gols: ${probMais15}% de chance`);
+    sugestoes.push(`+2.5 gols: ${probMais25}% de chance`);
+    sugestoes.push(`+5 escanteios: ${probMais5Esc}% de chance`);
+
+    // Vitória provável
+    if (Math.abs(forcaA - forcaB) >= 1) {
         const favorito = forcaA > forcaB ? nomeTimeA : nomeTimeB;
-        let porcentagemVitoria;
-        if (diferencaForca > 2.5) porcentagemVitoria = 85;
-        else if (diferencaForca > 2.0) porcentagemVitoria = 75;
-        else porcentagemVitoria = 65;
-
-        sugestoes.push(`Alta chance de vitória do ${favorito} (${porcentagemVitoria}%)`);
+        sugestoes.push(`Vitória provável: ${favorito}`);
     } else {
-        sugestoes.push("Critério não atingido para vitória provável.");
+        sugestoes.push('Vitória provável: Indefinida');
     }
 
-    if (mediaEscanteiosTotal > 4) {
-        let porcentagemEscanteios;
-        if (mediaEscanteiosTotal > 7) porcentagemEscanteios = 85;
-        else if (mediaEscanteiosTotal > 6) porcentagemEscanteios = 70;
-        else if (mediaEscanteiosTotal > 5) porcentagemEscanteios = 60;
-        else porcentagemEscanteios = 45;
+    // Ambos marcam
+    sugestoes.push(`Ambos marcam: ${chanceAmbosMarcam}% de chance`);
 
-        sugestoes.push(`Chance de +5 escanteios no total (${porcentagemEscanteios}%)`);
-    } else {
-        sugestoes.push("Critério não atingido para escanteios.");
+    // Cartões
+    if (probCartoes > 0) {
+        sugestoes.push(`Mais de 2 cartões: ${probCartoes}% de chance`);
     }
 
-    if (chanceAmbosMarcam >= 60) {
-        sugestoes.push(`Chance de ambos marcarem (${chanceAmbosMarcam}%)`);
-    } else {
-        sugestoes.push("Critério não atingido para 'ambos marcam'.");
-    }
-
-    return { sugestoes, ambosMarcam: chanceAmbosMarcam >= 60 };
+    return { sugestoes };
 }
+
+
 
 function exibirResultado(dados) {
     const {
@@ -236,13 +234,16 @@ function exibirResultado(dados) {
         ambosMarcam = true,
         comparacaoGols,
         chanceAmbosMarcam = 0,
-        estimativaEscanteios = ''
+        estimativaEscanteios,
+        mediaCartoesA = 0,
+        mediaCartoesB = 0,
+        mediaTotalCartoes = 0
     } = dados;
 
     const div = document.getElementById('resultado');
     div.innerHTML = `
-        <p><strong>${nomeTimeA}</strong> — Média de gols: ${mediaGolsA.toFixed(2)}, Total de gols: ${totalGolsA}, Total de escanteios: ${totalEscanteiosA}, Escanteios sofridos: ${totalEscSofridosA}, Força final: ${forcaA}</p>
-        <p><strong>${nomeTimeB}</strong> — Média de gols: ${mediaGolsB.toFixed(2)}, Total de gols: ${totalGolsB}, Total de escanteios: ${totalEscanteiosB}, Escanteios sofridos: ${totalEscSofridosB}, Força final: ${forcaB}</p>
+        <p><strong>${nomeTimeA}</strong> — Média de gols: ${mediaGolsA.toFixed(2)}, Total de gols: ${totalGolsA}, Total de escanteios: ${totalEscanteiosA}, Escanteios sofridos: ${totalEscSofridosA}, Média cartões: ${mediaCartoesA}</p>
+        <p><strong>${nomeTimeB}</strong> — Média de gols: ${mediaGolsB.toFixed(2)}, Total de gols: ${totalGolsB}, Total de escanteios: ${totalEscanteiosB}, Escanteios sofridos: ${totalEscSofridosB}, Média cartões: ${mediaCartoesB}</p>
         <p>Chance de +1.5 gols: <strong>${chanceMais15}</strong></p>
         <p>Chance de +2.5 gols: <strong>${chanceMais25}</strong></p>
         <p>Chance de +5 escanteios: <strong>${chanceMais5Escanteios}</strong></p>
@@ -251,6 +252,7 @@ function exibirResultado(dados) {
         <p><strong>Probabilidade "Ambos Marcam":</strong> ${chanceAmbosMarcam}%</p>
         <p><strong>Probabilidade "Não Ambos Marcam":</strong> ${100 - chanceAmbosMarcam}%</p>
         <p><strong>${estimativaEscanteios}</strong></p>
+        <p><strong>Média total de cartões no jogo:</strong> ${mediaTotalCartoes}</p>
     `;
 
     if (sugestoes.length > 0) {
@@ -266,6 +268,9 @@ function exibirResultado(dados) {
         `;
     }
 }
+
+
+
 
 function criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA, totalGolsB, totalEscanteiosA, totalEscanteiosB }) {
     const ctx = document.getElementById('grafico').getContext('2d');
@@ -325,6 +330,8 @@ function preencherAutomaticamente() {
         document.getElementById(`escSofridosB${i}`).value = Math.floor(Math.random() * 7);
         document.getElementById(`cdGolsA${i}`).value = Math.floor(Math.random() * 3);
         document.getElementById(`cdGolsB${i}`).value = Math.floor(Math.random() * 3);
+        document.getElementById(`cartoesA${i}`).value = Math.floor(Math.random() * 5); // até 4 cartões
+        document.getElementById(`cartoesB${i}`).value = Math.floor(Math.random() * 5);
     }
 }
 
@@ -363,6 +370,7 @@ function estimarIntervaloEscanteios(escanteiosA, escanteiosB, margem = margemEsc
 
 
 function calcularProbabilidades() {
+    // Verifica se há algum campo preenchido
     const todosInputs = document.querySelectorAll('input[type="number"], input[type="text"]');
     const temValorPreenchido = Array.from(todosInputs).some(input => input.value.trim() !== '');
 
@@ -371,9 +379,11 @@ function calcularProbabilidades() {
         return;
     }
 
+    // Nomes dos times
     const nomeTimeA = document.getElementById('nomeTimeA').value.trim() || 'Time A';
     const nomeTimeB = document.getElementById('nomeTimeB').value.trim() || 'Time B';
 
+    // Pegando dados dos inputs
     const golsA = pegarDados('golsA');
     const sofridosA = pegarDados('sofridosA');
     const golsB = pegarDados('golsB');
@@ -385,6 +395,11 @@ function calcularProbabilidades() {
     const cdGolsA = pegarDadosConfrontoDireto('cdGolsA');
     const cdGolsB = pegarDadosConfrontoDireto('cdGolsB');
 
+    // Cartões
+    const cartoesA = pegarDados('cartoesA');
+    const cartoesB = pegarDados('cartoesB');
+
+    // Calcula médias
     const mediaGolsA = calcularMedia(golsA);
     const mediaSofridosA = calcularMedia(sofridosA);
     const mediaGolsB = calcularMedia(golsB);
@@ -393,23 +408,37 @@ function calcularProbabilidades() {
     const mediaEscanteiosB = calcularMedia(escanteiosB);
     const mediaEscSofridosA = calcularMedia(escSofridosA);
     const mediaEscSofridosB = calcularMedia(escSofridosB);
+    // Média dos cartões, calculada corretamente
+    const mediaCartoesA = calcularMedia(cartoesA);
+    const mediaCartoesB = calcularMedia(cartoesB);
 
+    // Totais
     const totalEscSofridosA = escSofridosA.reduce((acc, val) => acc + val, 0);
     const totalEscSofridosB = escSofridosB.reduce((acc, val) => acc + val, 0);
     const totalGolsA = golsA.reduce((acc, val) => acc + val, 0);
     const totalGolsB = golsB.reduce((acc, val) => acc + val, 0);
     const totalEscanteiosA = escanteiosA.reduce((acc, val) => acc + val, 0);
     const totalEscanteiosB = escanteiosB.reduce((acc, val) => acc + val, 0);
+    const totalCartoesA = cartoesA.reduce((acc, val) => acc + val, 0);
+    const totalCartoesB = cartoesB.reduce((acc, val) => acc + val, 0);
 
+    // Médias totais
     const mediaTotalGols = (mediaGolsA + mediaGolsB + mediaSofridosA + mediaSofridosB) / 2;
     const mediaEscanteiosTotal = (mediaEscanteiosA + mediaEscanteiosB) / 2;
+    const totalCartoesJogo = totalCartoesA + totalCartoesB;
 
+    // Nova média dos cartões POR JOGO: soma total dividida por total de jogos (5 do time A + 5 do time B = 10)
+    const mediaCartoesPorJogo = totalCartoesJogo / (cartoesA.length + cartoesB.length); // Divide por 10
+
+    // Estimativa escanteios
     const estimativaEscanteios = estimarIntervaloEscanteios(escanteiosA, escanteiosB);
 
+    // Chances básicas
     const chanceMais15 = mediaTotalGols > 1.5 ? "Alta" : "Baixa";
     const chanceMais25 = mediaTotalGols > 2.5 ? "Alta" : "Baixa";
     const chanceMais5Escanteios = mediaEscanteiosTotal > 5 ? "Alta" : "Baixa";
 
+    // Forças detalhadas
     const forcaAcalc = calcularForcasDetalhadas(
         golsA, sofridosA, golsB, sofridosB,
         escanteiosA, escSofridosA, escanteiosB, escSofridosB
@@ -419,6 +448,7 @@ function calcularProbabilidades() {
         escanteiosB, escSofridosB, escanteiosA, escSofridosA
     );
 
+    // Confronto direto
     let confronto = null;
     let resultadoConfronto = '';
     let vantagemConfronto = 0;
@@ -435,11 +465,13 @@ function calcularProbabilidades() {
         `;
     }
 
+    // Combina forças e confronto direto
     const pesoGeral = 0.5;
     const pesoConfronto = 0.5;
     const forcaA = forcaAcalc.forcaFinal * pesoGeral + vantagemConfronto * pesoConfronto;
     const forcaB = forcaBcalc.forcaFinal * pesoGeral - vantagemConfronto * pesoConfronto;
 
+    // Resultado provável
     let resultado;
     const diferencaForca = Math.abs(forcaA - forcaB);
     if (diferencaForca >= 1.0) {
@@ -449,8 +481,10 @@ function calcularProbabilidades() {
         resultado = "Critério não atingido para vitória provável.";
     }
 
+    // Comparação gols +1.5 vs -3.5
     const comparacaoGols = compararMaisMenosGols(mediaTotalGols);
 
+    // Chance ambos marcam
     const chanceAmbosMarcam = calcularChanceAmbosMarcam(
         mediaGolsA,
         mediaGolsB,
@@ -460,6 +494,7 @@ function calcularProbabilidades() {
         cdGolsB
     );
 
+    // Sugestões de apostas
     const { sugestoes } = gerarSugestoes({
         mediaTotalGols,
         mediaEscanteiosTotal,
@@ -471,9 +506,12 @@ function calcularProbabilidades() {
         mediaGolsB,
         mediaSofridosA,
         mediaSofridosB,
-        chanceAmbosMarcam
+        chanceAmbosMarcam,
+        mediaCartoesPorJogo
     });
 
+
+    // Exibe resultado, agora com dados dos cartões (formatando para mostrar 2 casas decimais)
     exibirResultado({
         nomeTimeA,
         nomeTimeB,
@@ -496,9 +534,19 @@ function calcularProbabilidades() {
         ambosMarcam: chanceAmbosMarcam >= 60,
         comparacaoGols,
         chanceAmbosMarcam,
-        estimativaEscanteios
+        estimativaEscanteios,
+
+        // Dados de cartões para exibição
+        mediaCartoesA: mediaCartoesA.toFixed(2),
+        mediaCartoesB: mediaCartoesB.toFixed(2),
+        totalCartoesA,
+        totalCartoesB,
+        mediaTotalCartoes: mediaCartoesPorJogo.toFixed(2), // <- média real por jogo
+        totalCartoesSomados: totalCartoesA + totalCartoesB // <- total bruto somado
     });
 
+
+    // Cria gráfico (não incluindo cartões)
     criarGrafico({
         nomeTimeA,
         nomeTimeB,
@@ -510,6 +558,8 @@ function calcularProbabilidades() {
         totalEscanteiosB
     });
 }
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('formulario').addEventListener('submit', e => {
@@ -525,7 +575,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-// finalizado escanteios
+// cartoes
 
 
 

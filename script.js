@@ -1,277 +1,468 @@
-// script.js — versão corrigida e completa
-// =======================================================================
-// CONFIGURAÇÕES
-// =======================================================================
+/* script.js - Modelo Híbrido (Poisson + forças + heurísticas)
+   Compatível com o HTML fornecido.
+*/
+
 let chartInstance = null;
-let margemEscanteios = 1.0; // default
+let margemEscanteios = 1.5; // valor inicial (sincronizado no DOM quando carregar)
 
-// =======================================================================
-// FUNÇÕES BÁSICAS
-// =======================================================================
-function pegarDados(prefixo, jogos = 5) {
-    return Array.from({ length: jogos }, (_, i) => {
-        return Number(document.getElementById(`${prefixo}${i + 1}`).value) || 0;
-    });
+// --------------------------
+// HELPERS MATH
+// --------------------------
+function mean(arr) {
+    const valid = arr.filter(v => typeof v === 'number' && !Number.isNaN(v));
+    if (valid.length === 0) return 0;
+    return valid.reduce((a, b) => a + b, 0) / valid.length;
 }
 
-function pegarDadosConfrontoDireto(prefixo, jogos = 5) {
-    return Array.from({ length: jogos }, (_, i) => {
-        const v = Number(document.getElementById(`${prefixo}${i + 1}`).value);
-        return !isNaN(v) && v >= 0 ? v : null;
-    }).filter(v => v !== null);
+function sum(arr) {
+    return arr.reduce((a, b) => a + b, 0);
 }
 
-function calcularMedia(valores) {
-    return valores && valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
-}
-
-function calcularDesvioPadrao(valores) {
-    if (!valores || valores.length <= 1) return 0;
-    const media = calcularMedia(valores);
-    const soma = valores.reduce((acc, val) => acc + (val - media) ** 2, 0);
-    return Math.sqrt(soma / (valores.length - 1));
-}
-
-// =======================================================================
-// FORÇAS DOS TIMES (Gols + Escanteios)
-// =======================================================================
-function calcularForcasDetalhadas(gA, gsA, gB, gsB, escA, escSofA, escB, escSofB) {
-    const FO = calcularMedia(gA);
-    const FD = calcularMedia(gsA);
-    const FOAdv = calcularMedia(gB);
-    const FDAdv = calcularMedia(gsB);
-
-    const poderOfG = FO - FDAdv;
-    const poderDefG = FD - FOAdv;
-
-    const escAtaque = calcularMedia(escA);
-    const escDefesa = calcularMedia(escSofA);
-    const escAtaqueAdv = calcularMedia(escB);
-    const escDefAdv = calcularMedia(escSofB);
-
-    const poderOfE = escAtaque - escDefAdv;
-    const poderDefE = escDefesa - escAtaqueAdv;
-
-    const forcaFinal =
-        (poderOfG * 0.8 - poderDefG * 0.6) +
-        (poderOfE * 0.2 - poderDefE * 0.1);
-
-    return { FO, FD, poderOfG, poderDefG, poderOfE, poderDefE, forcaFinal };
-}
-
-// =======================================================================
-// +1.5 vs -3.5 GOLS
-// =======================================================================
-function compararMaisMenosGols(mediaTotalGols) {
-    let chanceMais15 = 0;
-    let chanceMenos35 = 0;
-
-    if (mediaTotalGols >= 2.7) {
-        chanceMais15 = 88;
-        chanceMenos35 = 22;
-    } else if (mediaTotalGols >= 2.2) {
-        chanceMais15 = 78;
-        chanceMenos35 = 40;
-    } else if (mediaTotalGols >= 1.8) {
-        chanceMais15 = 62;
-        chanceMenos35 = 55;
-    } else {
-        chanceMais15 = 40;
-        chanceMenos35 = 70;
+// Poisson PMF (iterativo para estabilidade)
+function poissonP(lambda, k) {
+    if (lambda <= 0) return k === 0 ? 1 : 0;
+    // compute e^-lambda * lambda^k / k! iteratively
+    let p = Math.exp(-lambda);
+    let term = p;
+    for (let i = 1; i <= k; i++) {
+        term *= lambda / i;
     }
+    return term; // equals P(X=k)
+}
 
+// CDF (probabilidade P(X <= k))
+function poissonCdf(lambda, kMax) {
+    let acc = 0;
+    for (let k = 0; k <= kMax; k++) acc += poissonP(lambda, k);
+    return acc;
+}
+
+// --------------------------
+// LEITURA DE INPUTS
+// --------------------------
+function getValues(prefix, jogos = 5) {
+    const vals = [];
+    for (let i = 1; i <= jogos; i++) {
+        const el = document.getElementById(`${prefix}${i}`);
+        const v = el ? Number(el.value) : NaN;
+        vals.push(isNaN(v) ? 0 : v);
+    }
+    return vals;
+}
+
+function coletarTodosDados() {
     return {
-        chanceMais15,
-        chanceMenos35,
-        melhorOpcao: chanceMais15 > chanceMenos35 ? "+1.5 gols" : "-3.5 gols"
+        nomeA: (document.getElementById('nomeTimeA')?.value || 'Time A').trim(),
+        nomeB: (document.getElementById('nomeTimeB')?.value || 'Time B').trim(),
+
+        golsA: getValues('golsA'),
+        golsB: getValues('golsB'),
+
+        sofridosA: getValues('sofridosA'),
+        sofridosB: getValues('sofridosB'),
+
+        escA: getValues('escanteiosA'),
+        escB: getValues('escanteiosB'),
+
+        escSofA: getValues('escSofridosA'),
+        escSofB: getValues('escSofridosB'),
+
+        cartA: getValues('cartoesA'),
+        cartB: getValues('cartoesB'),
+
+        cdA: getValues('cdGolsA'),
+        cdB: getValues('cdGolsB'),
+
+        margemEsc: margemEscanteios
     };
 }
 
-// =======================================================================
-// CONFRONTO DIRETO
-// =======================================================================
-function analisarConfrontoDireto(golsA, golsB) {
-    let vitoriasA = 0, vitoriasB = 0, empates = 0;
-    const total = Math.min(golsA.length, golsB.length);
-    for (let i = 0; i < total; i++) {
-        if (golsA[i] > golsB[i]) vitoriasA++;
-        else if (golsB[i] > golsA[i]) vitoriasB++;
-        else empates++;
+// --------------------------
+// MODELO HÍBRIDO - LAMBDAS (expected goals)
+// Estratégia:
+//  - usa médias dos últimos jogos
+//  - ajusta com diferença entre média própria e média de sofridos do adversário (meio caminho)
+//  - garante lambda mínimo positivo
+// --------------------------
+function calcularLambdas(mediaGolsA, mediaSofridosA, mediaGolsB, mediaSofridosB) {
+    // ajuste simples de força: combina média ofensiva com fraqueza defensiva adversária
+    // lambdaA = média gols A + 0.5 * (média gols A - média sofridos B)
+    // lambdaB = média gols B + 0.5 * (média gols B - média sofridos A)
+    let lambdaA = mediaGolsA + 0.5 * (mediaGolsA - mediaSofridosB);
+    let lambdaB = mediaGolsB + 0.5 * (mediaGolsB - mediaSofridosA);
+
+    // suavização/limites
+    lambdaA = Math.max(lambdaA, 0.10);
+    lambdaB = Math.max(lambdaB, 0.10);
+
+    return { lambdaA, lambdaB };
+}
+
+// --------------------------
+// CONVOLUÇÃO: Probabilidade do total de gols = t
+// P_total(t) = sum_{i=0..t} P_A(i) * P_B(t-i)
+// --------------------------
+function probTotalGoalsDistribution(lambdaA, lambdaB, maxGoals = 10) {
+    const probs = new Array(maxGoals + 1).fill(0);
+    for (let t = 0; t <= maxGoals; t++) {
+        let acc = 0;
+        for (let i = 0; i <= t; i++) {
+            acc += poissonP(lambdaA, i) * poissonP(lambdaB, t - i);
+        }
+        probs[t] = acc;
     }
-    return { vitoriasA, vitoriasB, empates, total };
+    return probs;
 }
 
-function calcularVantagemConfrontoDireto(vitoriasA, vitoriasB) {
-    const total = vitoriasA + vitoriasB;
-    if (total === 0) return 0;
-    return ((vitoriasA - vitoriasB) / total) * 1.5;
+// Prob(total >= k)
+function probTotalAtLeast(lambdaA, lambdaB, k, maxGoals = 10) {
+    const dist = probTotalGoalsDistribution(lambdaA, lambdaB, maxGoals);
+    let acc = 0;
+    for (let t = k; t <= maxGoals; t++) acc += dist[t];
+    // small tail beyond maxGoals: approximate by 1 - cdf(maxGoals)
+    return Math.min(100, Math.round(acc * 100));
 }
 
-// =======================================================================
-// AMBOS MARCAM
-// =======================================================================
-function calcularAmbosMarcamConfrontoDireto(cdA, cdB) {
-    const total = Math.min(cdA.length, cdB.length);
-    if (total === 0) return null;
-    let jogos = 0;
-    for (let i = 0; i < total; i++) if ((cdA[i] || 0) > 0 && (cdB[i] || 0) > 0) jogos++;
-    return Math.round((jogos / total) * 100);
+// Prob(total <= k)
+function probTotalAtMost(lambdaA, lambdaB, k, maxGoals = 10) {
+    const dist = probTotalGoalsDistribution(lambdaA, lambdaB, maxGoals);
+    let acc = 0;
+    for (let t = 0; t <= k; t++) acc += dist[t];
+    return Math.min(100, Math.round(acc * 100));
 }
 
-function calcularChanceAmbosMarcam(mA, mB, sA, sB, cdA, cdB) {
-    let score = 0;
-    if (mA > 1) score++;
-    if (mB > 1) score++;
-    if (sA > 1) score++;
-    if (sB > 1) score++;
-
-    const base = [25, 35, 55, 70, 82][score] || 25;
-    const confronto = calcularAmbosMarcamConfrontoDireto(cdA, cdB);
-
-    if (confronto !== null) return Math.round(base * 0.6 + confronto * 0.4);
-    return base;
+// --------------------------
+// PROBABILIDADES DE RESULTADO (Vitória, Empate, Derrota)
+// Calcular por somatório P(A=i)*P(B=j) para i>j, i==j, i<j
+// --------------------------
+function winDrawLoseProb(lambdaA, lambdaB, maxGoals = 10) {
+    let pAwin = 0, pDraw = 0, pBwin = 0;
+    for (let i = 0; i <= maxGoals; i++) {
+        const pAi = poissonP(lambdaA, i);
+        for (let j = 0; j <= maxGoals; j++) {
+            const pBj = poissonP(lambdaB, j);
+            const p = pAi * pBj;
+            if (i > j) pAwin += p;
+            else if (i === j) pDraw += p;
+            else pBwin += p;
+        }
+    }
+    return {
+        pAwin: Math.round(pAwin * 100),
+        pDraw: Math.round(pDraw * 100),
+        pBwin: Math.round(pBwin * 100)
+    };
 }
 
-// =======================================================================
-// SUGESTÕES DE APOSTAS
-// =======================================================================
-function gerarSugestoes({
-    nomeTimeA, nomeTimeB, mediaTotalGols,
-    mediaEscanteiosTotal, forcaA, forcaB,
-    chanceAmbosMarcam, mediaCartoesPorJogo
-}) {
-    const sugs = [];
-    const probMais15 = mediaTotalGols >= 2.5 ? 85 :
-        mediaTotalGols >= 2.0 ? 75 :
-            mediaTotalGols >= 1.5 ? 60 : 40;
-
-    const probMais25 = mediaTotalGols >= 2.5 ? 80 :
-        mediaTotalGols >= 2.0 ? 60 : 40;
-
-    const probEsc = mediaEscanteiosTotal > 5 ? 72 : 38;
-    const probCartoes = Math.min(100, Math.round(mediaCartoesPorJogo * 16));
-
-    sugs.push(`+1.5 gols: ${probMais15}% de chance`);
-    sugs.push(`+2.5 gols: ${probMais25}% de chance`);
-    sugs.push(`+5 escanteios: ${probEsc}% de chance`);
-    sugs.push(`Ambos marcam: ${chanceAmbosMarcam}% de chance`);
-    sugs.push(`Mais de 2 cartões: ${probCartoes}% de chance`);
-
-    if (Math.abs(forcaA - forcaB) >= 1)
-        sugs.push(`Vitória provável: ${forcaA > forcaB ? nomeTimeA : nomeTimeB}`);
-    else
-        sugs.push("Vitória provável: Indefinida");
-
-    return { sugestoes: sugs };
+// --------------------------
+// BTTS (Ambos marcam)
+// BTTS = 1 - P(A=0) - P(B=0) + P(A=0)*P(B=0) = 1 - P(A=0) - P(B=0) + P(A=0)P(B=0)
+// com independência: simplifica para 1 - P(A=0) - P(B=0) + P(A=0)P(B=0)
+// --------------------------
+function probBTTS(lambdaA, lambdaB) {
+    const pA0 = poissonP(lambdaA, 0);
+    const pB0 = poissonP(lambdaB, 0);
+    const btts = 1 - pA0 - pB0 + pA0 * pB0;
+    return Math.min(100, Math.round(btts * 100));
 }
 
-// =======================================================================
-// EXIBIR RESULTADOS
-// =======================================================================
-function exibirResultado(dados) {
-    const div = document.getElementById("resultado");
-    const {
-        nomeTimeA, nomeTimeB,
-        mediaGolsA, mediaGolsB, totalGolsA, totalGolsB,
-        totalEscanteiosA, totalEscanteiosB,
-        totalEscSofridosA, totalEscSofridosB,
-        mediaCartoesA, mediaCartoesB, mediaCartoesTotal,
-        chanceMais15, chanceMais25, chanceMais5Escanteios,
-        chanceAmbosMarcam, confrontoTexto,
-        sugestoes, estimativaEscanteios, comparacaoGols
-    } = dados;
+// --------------------------
+// ESCANTEIOS: usar Poisson com lambda = mediaEscA + mediaEscB
+// Estimativa de intervalo com margem (slider)
+// --------------------------
+function probEscanteiosAtLeast(meanEscA, meanEscB, threshold = 5) {
+    const lambda = Math.max(0.1, meanEscA + meanEscB);
+    let acc = 0;
+    // P(X >= threshold) = 1 - P(X <= threshold-1)
+    for (let k = 0; k <= threshold - 1; k++) acc += poissonP(lambda, k);
+    const p = 1 - acc;
+    return Math.min(100, Math.round(p * 100));
+}
 
-    div.innerHTML = `
-        <p><strong>${nomeTimeA}</strong> — Média de gols: ${mediaGolsA.toFixed(2)}, Total de gols: ${totalGolsA}, Total escanteios: ${totalEscanteiosA}, Escanteios sofridos: ${totalEscSofridosA}, Cartões: ${mediaCartoesA}</p>
-        <p><strong>${nomeTimeB}</strong> — Média de gols: ${mediaGolsB.toFixed(2)}, Total de gols: ${totalGolsB}, Total escanteios: ${totalEscanteiosB}, Escanteios sofridos: ${totalEscSofridosB}, Cartões: ${mediaCartoesB}</p>
+function estimativaEscanteiosInterval(meanEscA, meanEscB, margem = 1.5) {
+    const lambda = Math.max(0, meanEscA + meanEscB);
+    // usar desvio padrão Poisson = sqrt(lambda)
+    const desvio = Math.sqrt(lambda);
+    const min = Math.max(0, Math.floor(lambda - desvio * margem));
+    const max = Math.ceil(lambda + desvio * margem);
+    return { min, max, lambda };
+}
 
-        <p>Chance de +1.5 gols: <strong>${chanceMais15}%</strong></p>
-        <p>Chance de +2.5 gols: <strong>${chanceMais25}%</strong></p>
-        <p>Chance de +5 escanteios: <strong>${chanceMais5Escanteios}%</strong></p>
+// --------------------------
+// CARTÕES - heurística
+// --------------------------
+function probMaisDeDoisCartoes(meanCartA, meanCartB) {
+    const mediaPorJogo = meanCartA + meanCartB; // média total por jogo
+    // escalonar em relação a 6 cartões (arbitrário)
+    const prob = Math.min(100, Math.round((mediaPorJogo / 6) * 100));
+    return prob;
+}
 
-        ${confrontoTexto || ""}
+// --------------------------
+// GERAR SUGESTÕES (ordenadas)
+// --------------------------
+function montarSugestoes(probabilidades) {
+    // probabilidades: objeto com chaves nome->valor%
+    const items = [];
+    for (const key in probabilidades) {
+        items.push({ name: key, prob: probabilidades[key] });
+    }
+    // ordenar desc
+    items.sort((a, b) => b.prob - a.prob);
+    return items.map(i => `${i.name}: ${i.prob}%`);
+}
 
-        <p><strong>Ambos marcam:</strong> ${chanceAmbosMarcam}%</p>
-        <p>${estimativaEscanteios}</p>
-        <p>Média total de cartões: ${mediaCartoesTotal}</p>
+// --------------------------
+// FUNÇÃO PRINCIPAL: calcular todas as probabilidades e exibir
+// --------------------------
+function calcularProbabilidades() {
+    try {
+        // checar se o formulário tem dados
+        const anyInput = Array.from(document.querySelectorAll('input')).some(i => i.value.trim() !== '');
+        if (!anyInput) {
+            alert('Preencha pelo menos um campo (ou use Preencher Automático).');
+            return;
+        }
 
-        <ul>${(sugestoes || []).map(s => `<li>${s}</li>`).join("")}</ul>
+        const dados = coletarTodosDados();
 
-        <p>Comparação: +1.5 gols ${comparacaoGols.chanceMais15}% | -3.5 gols ${comparacaoGols.chanceMenos35}%</p>
-        <p><strong>Melhor opção: ${comparacaoGols.melhorOpcao}</strong></p>
+        // médias
+        const mediaGolsA = mean(dados.golsA);
+        const mediaGolsB = mean(dados.golsB);
+        const mediaSofA = mean(dados.sofridosA);
+        const mediaSofB = mean(dados.sofridosB);
+
+        const mediaEscA = mean(dados.escA);
+        const mediaEscB = mean(dados.escB);
+
+        const mediaCartA = mean(dados.cartA);
+        const mediaCartB = mean(dados.cartB);
+
+        // lambdas (esperados de gols) - híbrido
+        const { lambdaA, lambdaB } = calcularLambdas(mediaGolsA, mediaSofA, mediaGolsB, mediaSofB);
+
+        // probabilidades de total de gols
+        const over15 = probTotalAtLeast(lambdaA, lambdaB, 2, 12); // >=2 gols -> +1.5
+        const over25 = probTotalAtLeast(lambdaA, lambdaB, 3, 12); // >=3 gols -> +2.5
+        const under35 = probTotalAtMost(lambdaA, lambdaB, 3, 12); // <=3 -> under 3.5 (-3.5)
+        const over05 = probTotalAtLeast(lambdaA, lambdaB, 6, 12); // >=6 gols -> +5.5 (but we need +5 escanteios was for corners; ignore)
+
+        // BTTS
+        const btts = probBTTS(lambdaA, lambdaB);
+
+        // vitórias
+        const { pAwin, pDraw, pBwin } = winDrawLoseProb(lambdaA, lambdaB, 12);
+
+        // escanteios
+        const prob5Esc = probEscanteiosAtLeast(mediaEscA, mediaEscB, 5); // P(total esc >=5)
+        const escInterval = estimativaEscanteiosInterval(mediaEscA, mediaEscB, dados.margemEsc);
+
+        // cartões
+        const probCart = probMaisDeDoisCartoes(mediaCartA, mediaCartB);
+
+        // montar sugestões
+        const probabilidadesObj = {
+            '+1.5 gols (>=2)': over15,
+            '+2.5 gols (>=3)': over25,
+            'Ambos marcam': btts,
+            'Vitória A': pAwin,
+            'Empate': pDraw,
+            'Vitória B': pBwin,
+            '+5 escanteios (>=5)': prob5Esc,
+            'Mais de 2 cartões': probCart
+        };
+
+        const sugestoesOrdenadas = montarSugestoes({
+            '+1.5 gols': over15,
+            'Ambos marcam': btts,
+            '+2.5 gols': over25,
+            'Vitória provável (A)': pAwin,
+            'Vitória provável (B)': pBwin,
+            '+5 escanteios': prob5Esc
+        });
+
+        // exibir
+        const resultadoDiv = document.getElementById('resultado');
+        resultadoDiv.innerHTML = `
+      <h3>Resumo</h3>
+      <p><strong>${dados.nomeA}</strong> — média gols: ${mediaGolsA.toFixed(2)}, média sofridos: ${mediaSofA.toFixed(2)}</p>
+      <p><strong>${dados.nomeB}</strong> — média gols: ${mediaGolsB.toFixed(2)}, média sofridos: ${mediaSofB.toFixed(2)}</p>
+
+      <p><strong>Lambda (A):</strong> ${lambdaA.toFixed(2)} — <strong>Lambda (B):</strong> ${lambdaB.toFixed(2)}</p>
+
+      <p>Chance de <strong>+1.5 gols</strong>: <strong>${over15}%</strong></p>
+      <p>Chance de <strong>+2.5 gols</strong>: <strong>${over25}%</strong></p>
+      <p>Chance de <strong>Under 3.5 (≤3)</strong>: <strong>${under35}%</strong></p>
+
+      <p>Probabilidade <strong>Ambos marcam</strong>: <strong>${btts}%</strong></p>
+
+      <p>Probabilidades de resultado — <strong>${dados.nomeA}</strong>: ${pAwin}% | Empate: ${pDraw}% | <strong>${dados.nomeB}</strong>: ${pBwin}%</p>
+
+      <p>Estimativa de escanteios (λ): ${escInterval.lambda.toFixed(2)} — intervalo: ${escInterval.min} a ${escInterval.max} (margem ${dados.margemEsc})</p>
+      <p>Probabilidade de ≥5 escanteios: <strong>${prob5Esc}%</strong></p>
+
+      <p>Média cartões/jogo: ${(mediaCartA + mediaCartB).toFixed(2)} — Probabilidade >2 cartões: <strong>${probCart}%</strong></p>
+
+      <h4>Sugestões ordenadas</h4>
+      <ul>
+        ${sugestoesOrdenadas.map(s => `<li>${s}</li>`).join('')}
+      </ul>
     `;
+
+        // atualizar gráfico com: +1.5, +2.5, Ambos marcam, ≥5 escanteios
+        atualizarGraficoChart({
+            labels: ['+1.5', '+2.5', 'Ambos marcam', '≥5 escanteios'],
+            data: [over15, over25, btts, prob5Esc],
+            teams: [dados.nomeA, dados.nomeB]
+        });
+    } catch (err) {
+        console.error('Erro em calcularProbabilidades():', err);
+        alert('Ocorreu um erro. Veja console para detalhes.');
+    }
 }
 
-// =======================================================================
-// GRÁFICO
-// =======================================================================
-function criarGrafico({ nomeTimeA, nomeTimeB, mediaGolsA, mediaGolsB, totalGolsA, totalGolsB, totalEscA, totalEscB }) {
-    const canvas = document.getElementById("grafico");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+// --------------------------
+// GRÁFICO (Chart.js)
+// --------------------------
+function atualizarGraficoChart({ labels, data, teams }) {
+    const ctx = document.getElementById('grafico');
+    if (!ctx) return;
+    const context = ctx.getContext('2d');
 
-    if (chartInstance) chartInstance.destroy();
+    if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+    }
 
-    chartInstance = new Chart(ctx, {
-        type: "bar",
+    chartInstance = new Chart(context, {
+        type: 'bar',
         data: {
-            labels: ["Média Gols", "Total Gols", "Total Escanteios"],
-            datasets: [
-                { label: nomeTimeA, data: [mediaGolsA, totalGolsA, totalEscA], backgroundColor: "rgba(34,139,34,0.7)" },
-                { label: nomeTimeB, data: [mediaGolsB, totalGolsB, totalEscB], backgroundColor: "rgba(220,20,60,0.7)" }
-            ]
+            labels,
+            datasets: [{
+                label: 'Probabilidade (%)',
+                data,
+            }]
         },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
+        }
     });
 }
 
-// =======================================================================
-// ESTIMATIVA DE ESCANTEIOS
-// =======================================================================
-function estimarIntervaloEscanteios(escanteiosA, escanteiosB, margem = margemEscanteios) {
-    const totalJogos = Math.min(escanteiosA.length, escanteiosB.length);
-    if (totalJogos === 0) return "Sem dados suficientes para estimar escanteios.";
-
-    const totaisPorJogo = [];
-    for (let i = 0; i < totalJogos; i++) {
-        totaisPorJogo.push((escanteiosA[i] || 0) + (escanteiosB[i] || 0));
-    }
-
-    const mediaTotal = calcularMedia(totaisPorJogo);
-    const desvioTotal = calcularDesvioPadrao(totaisPorJogo);
-
-    const min = Math.max(0, Math.floor(mediaTotal - desvioTotal * margem));
-    const max = Math.ceil(mediaTotal + desvioTotal * margem);
-
-    return `Estimativa de escanteios no jogo: entre ${min} e ${max}`;
-}
-
-// =======================================================================
-// LIMPAR / PREENCHER
-// =======================================================================
+// --------------------------
+// UTILIDADES: limpar e preencher
+// --------------------------
 function limparFormulario() {
-    const inputs = document.querySelectorAll('input[type="number"], input[type="text"]');
-    inputs.forEach(input => input.value = '');
+    document.querySelectorAll('input[type="number"], input[type="text"]').forEach(i => i.value = '');
     document.getElementById('resultado').innerHTML = '';
     if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 }
 
 function preencherAutomaticamente() {
+    // exemplo mais variado
     document.getElementById('nomeTimeA').value = 'Palmeiras';
     document.getElementById('nomeTimeB').value = 'Corinthians';
+
+    const sampleA = [2, 1, 3, 0, 1];
+    const sampleB = [1, 1, 0, 2, 2];
     for (let i = 1; i <= 5; i++) {
-        document.getElementById(`golsA${i}`).value = Math.floor(Math.random() * 4);
-        document.getElementById(`sofridosA${i}`).value = Math.floor(Math.random() * 3);
-        document.getElementById(`golsB${i}`).value = Math.floor(Math.random() * 4);
-        document.getElementById(`sofridosB${i}`).value = Math.floor(Math.random() * 3);
-        document.getElementById(`escA${i}`).value = Math.floor(Math.random() * 10);
-        document.getElementById(`escSofA${i}`).value = Math.floor(Math.random() * 10);
-        document.getElementById(`escB${i}`).value = Math.floor(Math.random() * 10);
-        document.getElementById(`escSofB${i}`).value = Math.floor(Math.random() * 10);
-        document.getElementById(`cartA${i}`).value = Math.floor(Math.random() * 5);
-        document.getElementById(`cartB${i}`).value = Math.floor(Math.random() * 5);
+        ['golsA', 'sofridosA', 'escanteiosA', 'escSofridosA', 'cartoesA'].forEach((p, idx) => {
+            const val = idx === 0 ? sampleA[i - 1] : (idx === 1 ? (i % 2) : Math.floor(Math.random() * 6));
+            const el = document.getElementById(`${p}${i}`);
+            if (el) el.value = val;
+        });
+        ['golsB', 'sofridosB', 'escanteiosB', 'escSofridosB', 'cartoesB'].forEach((p, idx) => {
+            const val = idx === 0 ? sampleB[i - 1] : (idx === 1 ? (i % 2) : Math.floor(Math.random() * 6));
+            const el = document.getElementById(`${p}${i}`);
+            if (el) el.value = val;
+        });
+
+        // confronto direto (placares)
+        const cdA = Math.floor(Math.random() * 3);
+        const cdB = Math.floor(Math.random() * 3);
+        if (document.getElementById(`cdGolsA${i}`)) document.getElementById(`cdGolsA${i}`).value = cdA;
+        if (document.getElementById(`cdGolsB${i}`)) document.getElementById(`cdGolsB${i}`).value = cdB;
     }
+
+    // cartões exemplo
+    for (let i = 1; i <= 5; i++) {
+        const ca = document.getElementById(`cartoesA${i}`);
+        const cb = document.getElementById(`cartoesB${i}`);
+        if (ca) ca.value = Math.floor(Math.random() * 3);
+        if (cb) cb.value = Math.floor(Math.random() * 3);
+    }
+
+    // atualizar UI
+    document.getElementById('valorMargem').textContent = margemEscanteios.toFixed(1);
 }
+
+// --------------------------
+// EVENT BINDING (DOMContentLoaded)
+// --------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    // listeners de botões
+    const form = document.getElementById('formulario');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            calcularProbabilidades();
+        });
+    }
+
+    const btnPreencher = document.getElementById('preencher');
+    if (btnPreencher) btnPreencher.addEventListener('click', preencherAutomaticamente);
+
+    const btnLimpar = document.getElementById('limpar');
+    if (btnLimpar) btnLimpar.addEventListener('click', limparFormulario);
+
+    // margem slider
+    const margemInput = document.getElementById('margemEsc');
+    const valorSpan = document.getElementById('valorMargem');
+    if (margemInput && valorSpan) {
+        margemEscanteios = parseFloat(margemInput.value) || margemEscanteios;
+        valorSpan.textContent = margemEscanteios.toFixed(1);
+        margemInput.addEventListener('input', (e) => {
+            margemEscanteios = parseFloat(e.target.value) || margemEscanteios;
+            valorSpan.textContent = margemEscanteios.toFixed(1);
+        });
+    }
+
+    // dica: preencher automaticamente para testes
+    // preencherAutomaticamente();
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
